@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# WARNING: SPAGHETTI CODE!!!
+
+if [ "$1" == "" ]; then
+    echo "Format: bchroot <directory|device> [mountpoint]"
+    EXIT="1"
+fi
+
+if [ "$EUID" -ne 0 ]; then
+    echo "E: Please run as root"
+    EXIT="1"
+fi
+
+if [ "$EXIT" == "1" ]; then
+    exit
+fi
+
+if [ -d $1 ]; then
+    echo "$1 is a directory."
+    DIR=$1
+elif [ -e $1 ]; then
+    # https://stackoverflow.com/questions/918886/how-do-i-split-a-string-on-a-delimiter-in-bash
+    IFS='/' read -ra ADDR <<< "$1"
+    for i in "${ADDR[@]}"; do
+        if [ "$i" = "dev" ]; then
+            echo "$1 is a device"
+            if [ "$2" == "" ]; then
+                echo "Using /mnt as default mountpoint ..."
+                DIR="/mnt"
+            else
+                echo "Using $2 as mountpoint ..."
+                DIR="$2"
+            fi
+
+            if [ -z "$(ls -A $DIR)" ]; then
+                echo "Mounting $1 at $DIR ..."
+                mount $1 $DIR
+            else
+                echo "E: $DIR is not empty."
+                exit
+            fi
+            break
+        fi
+    done
+else
+    echo "E: $1 does not exist."
+    exit
+fi
+
+if [ -f "$DIR/bin/bash" ]; then
+    echo "$DIR is a valid chroot directory."
+    echo "Mounting /proc ..."
+    mount -t proc /proc $DIR/proc/
+    echo "Mounting /sys ..."
+    mount --rbind /sys $DIR/sys/
+    echo "Mounting /dev ..."
+    mount --rbind /dev $DIR/dev/
+
+    echo "Have a nice session!"
+    chroot $DIR
+else
+    echo "E: $DIR is not a valid chroot directory."
+    exit
+fi
+
+echo "Trying to umount ..."
+umount $DIR -Rvfa
