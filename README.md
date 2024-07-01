@@ -4,7 +4,7 @@ A bash script that automatically mounts /proc, /sys and /dev to the chroot direc
 - Mounts /proc, /sys and /dev to the chroot directory
 - Automatically mounts devices
 - Checks if the chroot directory is valid
-## Syntax
+## Usage
 ```bash
-bchroot <directory|device> [mountpoint]
+bchroot <directory|device> [Apply DNS-fix (true|false)] [mountpoint]
 ```
