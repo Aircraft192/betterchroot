@@ -3,7 +3,7 @@
 # WARNING: SPAGHETTI CODE!!!
 
 if [ "$1" == "" ]; then
-    echo "Format: bchroot <directory|device> [mountpoint]"
+    echo "Format: bchroot <directory|device> [Apply DNS-fix (true|false)] [mountpoint]"
     EXIT="1"
 fi
 
@@ -25,12 +25,12 @@ elif [ -e $1 ]; then
     for i in "${ADDR[@]}"; do
         if [ "$i" = "dev" ]; then
             echo "$1 is a device"
-            if [ "$2" == "" ]; then
+            if [ "$3" == "" ]; then
                 echo "Using /mnt as default mountpoint ..."
                 DIR="/mnt"
             else
-                echo "Using $2 as mountpoint ..."
-                DIR="$2"
+                echo "Using $3 as mountpoint ..."
+                DIR="$3"
             fi
 
             if [ -z "$(ls -A $DIR)" ]; then
@@ -59,9 +59,22 @@ if [ -f "$DIR/bin/bash" ]; then
     echo "Mounting /run ..."
     mount -o bind /run $DIR/run/
 
+    if [ "$2" == "true" ] || [ "$2" == "yes" ] || [ "$2" == "y" ]; then
+        echo "Applying DNS-fix ..."
+        mv $DIR/etc/resolv.conf $DIR/etc/resolv.conf.bak
+        cp /etc/resolv.conf $DIR/etc/resolv.conf
+    fi
+
     echo "Have a nice session!"
     chroot $DIR
 else
     echo "E: $DIR is not a valid chroot directory."
     exit
+fi
+
+# Exit logic
+
+if [ "$2" == "true" ] || [ "$2" == "yes" ] || [ "$2" == "y" ]; then
+    echo "Undoing DNS-fix ..."
+    mv $DIR/etc/resolv.conf.bak $DIR/etc/resolv.conf
 fi
