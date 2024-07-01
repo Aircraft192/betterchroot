@@ -53,9 +53,11 @@ if [ -f "$DIR/bin/bash" ]; then
     echo "Mounting /proc ..."
     mount -t proc /proc $DIR/proc/
     echo "Mounting /sys ..."
-    mount --rbind /sys $DIR/sys/
+    mount -t sysfs /sys $DIR/sys/
     echo "Mounting /dev ..."
     mount --rbind /dev $DIR/dev/
+    echo "Mounting /run ..."
+    mount -o bind /run $DIR/run/
 
     echo "Have a nice session!"
     chroot $DIR
@@ -63,6 +65,3 @@ else
     echo "E: $DIR is not a valid chroot directory."
     exit
 fi
-
-echo "Trying to umount ..."
-umount $DIR -Rvfa
